@@ -1,4 +1,5 @@
 name: Backend CI - Test, Build and Push Images to ACR
+
 on:
   workflow_dispatch:
   push:
@@ -13,6 +14,9 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
+  # =======================
+  # Job 1: Test & Lint Code
+  # =======================
   test_and_lint_backends:
     runs-on: ubuntu-latest
 
@@ -82,6 +86,9 @@ jobs:
           POSTGRES_PASSWORD: postgres
         run: pytest tests --maxfail=1 --disable-warnings -q
 
+  # ================================
+  # Job 2: Build & Push Docker Images
+  # ================================
   build_and_push_images:
     runs-on: ubuntu-latest
     needs: test_and_lint_backends
@@ -94,11 +101,12 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Correct ACR login
-      - name: ACR Login
-        run: |
-          ACR_NAME=$(echo "${{ secrets.ACR_LOGIN_SERVER }}" | cut -d. -f1)
-          az acr login --name $ACR_NAME
+      - name: Docker login to ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
+          password: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
 
       - name: Build & push Product Service
         run: |
@@ -109,7 +117,3 @@ jobs:
         run: |
           docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/order_service:latest ./backend/order_service
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/order_service:latest
-
-      - name: Logout
-        run: az logout
-        if: always()
