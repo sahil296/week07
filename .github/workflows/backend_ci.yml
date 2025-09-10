@@ -96,7 +96,12 @@ jobs:
 
       - name: Docker login to ACR
         run: |
-          az acr login --name $(echo ${{ secrets.ACR_LOGIN_SERVER }} | cut -d. -f1)
+          echo ${{ secrets.AZURE_CREDENTIALS }} | jq -r .clientId
+          az acr login --name $(echo "${{ secrets.ACR_LOGIN_SERVER }}" | cut -d. -f1)
+          docker login ${{ secrets.ACR_LOGIN_SERVER }} \
+            -u 00000000-0000-0000-0000-000000000000 \
+            -p $(az acr login --name $(echo "${{ secrets.ACR_LOGIN_SERVER }}" | cut -d. -f1) --expose-token --output tsv --query accessToken)
+
 
       - name: Build & push Product Service
         run: |
