@@ -110,10 +110,13 @@ jobs:
 
       - name: Build & push Product Service
         run: |
+          echo "Pushing to: ${{ secrets.ACR_LOGIN_SERVER }}/product_service:latest"
           docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/product_service:latest ./backend/product_service
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/product_service:latest
-
       - name: Build & push Order Service
         run: |
+          echo "Pushing to: ${{ secrets.ACR_LOGIN_SERVER }}/order_service:latest"
           docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/order_service:latest ./backend/order_service
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/order_service:latest
+
+        
